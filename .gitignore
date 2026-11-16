@@ -1,0 +1,7 @@
+# Rust / Tauri build artifacts
+/src-tauri/target/
+/src-tauri/gen/
+
+# Binaries and logs
+*.exe
+*.log

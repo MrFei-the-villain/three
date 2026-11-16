@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Three</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Non-blocking: use media="print" trick so the GUI renders even when offline or the fetch is slow. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" /></noscript>
+</head>
+<body>
+  <!-- ============== ONBOARDING ============== -->
+  <section id="onboarding" class="onboarding" hidden>
+    <div class="onboarding-track" id="onboarding-track">
+      <div class="onboarding-slide active" data-slide="0">
+        <div class="onboarding-mark">3</div>
+        <h1>Three</h1>
+        <p class="onboarding-lead">A tiny task queue for people who've given up on to-do apps.</p>
+      </div>
+      <div class="onboarding-slide" data-slide="1">
+        <h2>Three at a time</h2>
+        <p>You can have many things on your list.</p>
+        <p>Three shows you the three most urgent.</p>
+      </div>
+      <div class="onboarding-slide" data-slide="2">
+        <h2>Pick a deadline</h2>
+        <p>Add a deadline if you want one.</p>
+        <p>Tasks without deadlines still count, just softer.</p>
+      </div>
+      <div class="onboarding-slide" data-slide="3">
+        <h2>Time it</h2>
+        <p>Tap a task to start a timer.</p>
+        <p>It runs as long as you're on it. Pause when you stop.</p>
+      </div>
+      <div class="onboarding-slide onboarding-final" data-slide="4">
+        <h2>That's it.</h2>
+        <p>Add your first task. Make it small.</p>
+        <button class="btn-primary" id="onboarding-finish">Start</button>
+      </div>
+    </div>
+    <div class="onboarding-dots" id="onboarding-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+  </section>
+
+  <!-- ============== DAY EDITOR ============== -->
+  <section id="editor" class="editor" hidden>
+    <header class="editor-head">
+      <h1 class="editor-title" id="editor-title">Plan your day</h1>
+      <p class="editor-sub" id="editor-sub">What needs doing today?</p>
+    </header>
+    <div class="editor-list" id="editor-list"></div>
+    <button class="editor-add" id="editor-add-row" type="button">+ Add another</button>
+    <div class="editor-actions">
+      <button class="btn-ghost" id="editor-skip" type="button">Not today</button>
+      <button class="btn-primary" id="editor-done" type="button">Done</button>
+    </div>
+  </section>
+
+  <!-- ============== MAIN APP ============== -->
+  <main id="app" class="app" hidden>
+    <header class="app-header" id="drag-region">
+      <div class="header-left">
+        <h1 class="app-title">Today</h1>
+        <p class="app-subtitle" id="date-label"></p>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" id="energy-btn" aria-label="Energy check-in" title="Energy check-in">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="tasks-btn" aria-label="All tasks" title="All tasks">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h18"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="archive-btn" aria-label="Archive" title="Archive">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="4" rx="1"/>
+            <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/>
+            <path d="M10 12h4"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="settings-btn" aria-label="Settings" title="Settings">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v3M12 19v3M4.2 4.2l2.2 2.2M17.6 17.6l2.2 2.2M2 12h3M19 12h3M4.2 19.8l2.2-2.2M17.6 6.4l2.2-2.2"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="active-section" id="active-section" hidden>
+      <div class="active-card" id="active-card">
+        <div class="active-ring">
+          <svg viewBox="0 0 64 64" class="ring-svg">
+            <circle cx="32" cy="32" r="28" class="ring-bg"/>
+            <circle cx="32" cy="32" r="28" class="ring-fg" id="active-ring-fg"/>
+          </svg>
+          <div class="active-time" id="active-time">0:00</div>
+        </div>
+        <div class="active-meta">
+          <div class="active-label">Working on</div>
+          <div class="active-text" id="active-text">—</div>
+          <div class="active-deadline" id="active-deadline"></div>
+        </div>
+        <button class="active-pause" id="active-pause" aria-label="Pause timer">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <rect x="6" y="5" width="4" height="14" rx="1"/>
+            <rect x="14" y="5" width="4" height="14" rx="1"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="task-list" id="task-list" aria-label="Most urgent tasks"></section>
+
+    <section class="empty-state" id="empty-state" hidden>
+      <div class="empty-illustration" aria-hidden="true">
+        <svg viewBox="0 0 96 96" width="96" height="96" fill="none">
+          <defs>
+            <linearGradient id="empty-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="var(--accent-soft)" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.3"/>
+            </linearGradient>
+          </defs>
+          <circle cx="48" cy="48" r="40" fill="url(#empty-grad)"/>
+          <circle cx="48" cy="48" r="30" stroke="var(--accent)" stroke-width="1" stroke-opacity="0.25" fill="none"/>
+          <path d="M34 48l9 9 19-19" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <h2 class="empty-title">Nothing on your plate yet</h2>
+      <p class="empty-sub">Add the smallest thing you can think of. Even a 5-minute thing counts.</p>
+      <button class="btn-primary btn-large" id="empty-add-btn" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Add your first task
+      </button>
+    </section>
+
+    <footer class="app-footer">
+      <div class="footer-info" id="footer-info"></div>
+      <span class="build-tag" id="build-tag" title="Build version">v1.0.0</span>
+      <button class="fab" id="add-btn" aria-label="Add a task">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </button>
+    </footer>
+  </main>
+
+  <!-- ============== ADD TASK OVERLAY ============== -->
+  <div class="overlay" id="add-overlay" hidden>
+    <div class="overlay-backdrop" data-close="add"></div>
+    <div class="overlay-sheet" role="dialog" aria-label="Add a task">
+      <div class="overlay-handle"></div>
+      <button class="overlay-close" data-close="add" aria-label="Close" type="button">&times;</button>
+      <h3 class="overlay-title">Add a task</h3>
+      <p class="overlay-hint">What needs doing?</p>
+      <form id="add-form">
+        <input
+          type="text"
+          id="task-input"
+          class="task-input"
+          placeholder="Reply to Sara"
+          maxlength="200"
+          autocomplete="off"
+        />
+        <div class="form-divider"></div>
+
+        <div class="form-section">
+          <label class="form-label">
+            Minimum time
+            <span class="form-optional">how long, at minimum</span>
+          </label>
+          <div class="min-time-row">
+            <input
+              type="number"
+              id="task-mintime"
+              class="min-time-input"
+              min="1"
+              max="999"
+              value="30"
+              inputmode="numeric"
+            />
+            <div class="min-time-unit" role="radiogroup" aria-label="Time unit">
+              <button type="button" class="unit-chip active" data-unit="min">min</button>
+              <button type="button" class="unit-chip" data-unit="hour">hr</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">
+            Priority
+            <span class="form-optional">from urgent to long-term</span>
+          </label>
+          <div class="priority-row" id="priority-row" role="radiogroup" aria-label="Priority">
+            <button type="button" class="priority-pill" data-priority="1" aria-label="Urgent">
+              <span class="priority-dot p1"></span><span class="priority-label">Urgent</span>
+            </button>
+            <button type="button" class="priority-pill" data-priority="2" aria-label="High">
+              <span class="priority-dot p2"></span><span class="priority-label">High</span>
+            </button>
+            <button type="button" class="priority-pill selected" data-priority="3" aria-label="Medium">
+              <span class="priority-dot p3"></span><span class="priority-label">Medium</span>
+            </button>
+            <button type="button" class="priority-pill" data-priority="4" aria-label="Low">
+              <span class="priority-dot p4"></span><span class="priority-label">Low</span>
+            </button>
+            <button type="button" class="priority-pill" data-priority="5" aria-label="Long-term">
+              <span class="priority-dot p5"></span><span class="priority-label">Long-term</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">
+            Deadline
+            <span class="form-optional">optional</span>
+          </label>
+          <div class="deadline-presets" id="deadline-presets">
+            <button type="button" class="chip" data-preset="today">Today 6pm</button>
+            <button type="button" class="chip" data-preset="tomorrow">Tomorrow 6pm</button>
+            <button type="button" class="chip" data-preset="3d">3 days</button>
+            <button type="button" class="chip" data-preset="week">1 week</button>
+          </div>
+          <input type="datetime-local" id="deadline-input" class="datetime-input" />
+          <button type="button" class="link-btn" id="deadline-clear">No deadline</button>
+        </div>
+
+        <div class="overlay-actions">
+          <button type="button" class="btn-ghost" data-close="add">Cancel</button>
+          <button type="submit" class="btn-primary">Add task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============== ALL TASKS OVERLAY ============== -->
+  <div class="overlay" id="tasks-overlay" hidden>
+    <div class="overlay-backdrop" data-close="tasks"></div>
+    <div class="overlay-sheet overlay-sheet-tall" role="dialog" aria-label="All tasks">
+      <div class="overlay-handle"></div>
+      <h3 class="overlay-title">All tasks</h3>
+      <div class="task-filters" id="task-filters">
+        <button class="filter-chip active" data-filter="active">Active</button>
+        <button class="filter-chip" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="done">Done</button>
+      </div>
+      <p class="overlay-hint" id="tasks-hint">Sorted by urgency.</p>
+      <div class="task-manage-list" id="task-manage-list"></div>
+    </div>
+  </div>
+
+  <!-- ============== EDIT TASK OVERLAY ============== -->
+  <div class="overlay" id="edit-overlay" hidden>
+    <div class="overlay-backdrop" data-close="edit"></div>
+    <div class="overlay-sheet" role="dialog" aria-label="Edit task">
+      <div class="overlay-handle"></div>
+      <button class="overlay-close" data-close="edit" aria-label="Close" type="button">&times;</button>
+      <h3 class="overlay-title">Edit task</h3>
+      <form id="edit-form">
+        <input
+          type="text"
+          id="edit-input"
+          class="task-input"
+          placeholder="Task text"
+          maxlength="200"
+          autocomplete="off"
+        />
+        <div class="form-divider"></div>
+
+        <div class="form-section">
+          <label class="form-label">
+            Minimum time
+            <span class="form-optional">how long, at minimum</span>
+          </label>
+          <div class="min-time-row">
+            <input
+              type="number"
+              id="edit-mintime"
+              class="min-time-input"
+              min="1"
+              max="999"
+              value="30"
+              inputmode="numeric"
+            />
+            <div class="min-time-unit" id="edit-mintime-unit" role="radiogroup" aria-label="Time unit">
+              <button type="button" class="unit-chip active" data-unit="min">min</button>
+              <button type="button" class="unit-chip" data-unit="hour">hr</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">
+            Priority
+            <span class="form-optional">from urgent to long-term</span>
+          </label>
+          <div class="priority-row" id="edit-priority-row" role="radiogroup" aria-label="Priority">
+            <button type="button" class="priority-pill" data-priority="1" aria-label="Urgent">
+              <span class="priority-dot p1"></span><span class="priority-label">Urgent</span>
+            </button>
+            <button type="button" class="priority-pill" data-priority="2" aria-label="High">
+              <span class="priority-dot p2"></span><span class="priority-label">High</span>
+            </button>
+            <button type="button" class="priority-pill selected" data-priority="3" aria-label="Medium">
+              <span class="priority-dot p3"></span><span class="priority-label">Medium</span>
+            </button>
+            <button type="button" class="priority-pill" data-priority="4" aria-label="Low">
+              <span class="priority-dot p4"></span><span class="priority-label">Low</span>
+            </button>
+            <button type="button" class="priority-pill" data-priority="5" aria-label="Long-term">
+              <span class="priority-dot p5"></span><span class="priority-label">Long-term</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">
+            Deadline
+            <span class="form-optional">optional</span>
+          </label>
+          <div class="deadline-presets" id="edit-deadline-presets">
+            <button type="button" class="chip" data-preset="today">Today 6pm</button>
+            <button type="button" class="chip" data-preset="tomorrow">Tomorrow 6pm</button>
+            <button type="button" class="chip" data-preset="3d">3 days</button>
+            <button type="button" class="chip" data-preset="week">1 week</button>
+          </div>
+          <input type="datetime-local" id="edit-deadline-input" class="datetime-input" />
+          <button type="button" class="link-btn" id="edit-deadline-clear">No deadline</button>
+        </div>
+        <div class="overlay-actions">
+          <button type="button" class="btn-ghost btn-danger" id="edit-delete">Delete</button>
+          <button type="button" class="btn-ghost" data-close="edit">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============== ARCHIVE OVERLAY ============== -->
+  <div class="overlay" id="archive-overlay" hidden>
+    <div class="overlay-backdrop" data-close="archive"></div>
+    <div class="overlay-sheet overlay-sheet-tall" role="dialog" aria-label="Archive">
+      <div class="overlay-handle"></div>
+      <h3 class="overlay-title">Archive</h3>
+      <p class="overlay-hint">Tasks you didn't finish. No judgment here.</p>
+      <div class="archive-list" id="archive-list"></div>
+      <div class="overlay-actions">
+        <button type="button" class="btn-ghost" data-close="archive">Close</button>
+        <button type="button" class="btn-ghost btn-danger" id="archive-clear" hidden>Clear all</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== SETTINGS OVERLAY ============== -->
+  <div class="overlay" id="settings-overlay" hidden>
+    <div class="overlay-backdrop" data-close="settings"></div>
+    <div class="overlay-sheet" role="dialog" aria-label="Settings">
+      <div class="overlay-handle"></div>
+      <h3 class="overlay-title">Settings</h3>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Theme</div>
+          <div class="setting-desc">Match your system, or pick one.</div>
+        </div>
+        <select id="theme-select" class="select">
+          <option value="auto">Auto</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Energy check-in</div>
+          <div class="setting-desc">A small emoji at the start of the day. For you, not for stats.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="energy-toggle" />
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Daily mode</div>
+          <div class="setting-desc">Plan each day's homework when the day starts. Long holidays are planned once, on the first day of the break.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="daily-toggle" />
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Show on the home screen</div>
+          <div class="setting-desc">How many of the most urgent tasks to surface. 1–3.</div>
+        </div>
+        <select id="slots-select" class="select">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+        </select>
+      </div>
+
+      <div class="setting-row setting-row-button">
+        <button type="button" class="btn-ghost" id="show-save">Reveal save file</button>
+      </div>
+
+      <div class="setting-row setting-row-button">
+        <button type="button" class="btn-ghost" id="reset-onboarding">Show welcome again</button>
+      </div>
+
+      <div class="setting-row setting-row-button">
+        <button type="button" class="btn-ghost btn-danger" id="reset-all">Erase everything</button>
+      </div>
+
+      <div class="setting-footer">
+        <p id="info-line">Three keeps your tasks on this device. Encrypted at rest.</p>
+      </div>
+
+      <div class="overlay-actions">
+        <button type="button" class="btn-primary" data-close="settings">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== ENERGY CHECK-IN OVERLAY ============== -->
+  <div class="overlay" id="energy-overlay" hidden>
+    <div class="overlay-backdrop" data-close="energy"></div>
+    <div class="overlay-sheet overlay-sheet-small" role="dialog" aria-label="Energy check-in">
+      <div class="overlay-handle"></div>
+      <button class="overlay-close" data-close="energy" aria-label="Close" type="button">&times;</button>
+      <h3 class="overlay-title">How's your energy?</h3>
+      <p class="overlay-hint">Just for you. No tracking.</p>
+      <div class="energy-grid" id="energy-grid">
+        <button class="energy-btn-large" data-energy="1" aria-label="Very low">
+          <span class="energy-emoji">😴</span>
+          <span class="energy-label">Very low</span>
+        </button>
+        <button class="energy-btn-large" data-energy="2" aria-label="Low">
+          <span class="energy-emoji">🥱</span>
+          <span class="energy-label">Low</span>
+        </button>
+        <button class="energy-btn-large" data-energy="3" aria-label="Okay">
+          <span class="energy-emoji">🙂</span>
+          <span class="energy-label">Okay</span>
+        </button>
+        <button class="energy-btn-large" data-energy="4" aria-label="Good">
+          <span class="energy-emoji">😊</span>
+          <span class="energy-label">Good</span>
+        </button>
+        <button class="energy-btn-large" data-energy="5" aria-label="Strong">
+          <span class="energy-emoji">💪</span>
+          <span class="energy-label">Strong</span>
+        </button>
+      </div>
+      <div class="energy-actions">
+        <button class="btn-ghost" id="energy-pass" type="button">Pass for today</button>
+        <button class="btn-primary" id="energy-continue" type="button" hidden>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== TOAST ============== -->
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

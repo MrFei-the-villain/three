@@ -1,0 +1,30 @@
+[package]
+name = "three"
+version = "1.0.0"
+description = "Three — Tiny Task Queue for chronic procrastinators"
+authors = ["Three"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "three_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+aes-gcm = "0.10"
+rand = "0.8"
+zeroize = "1"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
